@@ -26,42 +26,49 @@
 
 
 Cypress.Commands.add("login", (username, password, onSuccess) => {
-    describe('Login', () => {
-        it('Login through Google', () => {
-            const socialLoginOptions = {
-
-                username: username,
-                password: password,
-                loginUrl: 'http://geekyants-login.geekydev.com/#',
-                headless: false,
-                preLoginSelector: '.custom-btn',
-                logs: true,
-                isPopup: false,
-
-            }
-
-            return cy.task('GoogleSocialLogin', socialLoginOptions).then(({ cookies }) => {
-                cy.clearCookies()
-                const cookie = cookies.filter(cookie => cookie.name === 'geekyants_session').pop()
-                if (cookie) {
-                    cy.setCookie(cookie.name, cookie.value, {
-                        domain: cookie.domain,
-                        expiry: cookie.expires,
-                        httpOnly: cookie.httpOnly,
-                        path: cookie.path,
-                        secure: cookie.secure
-                    })
-                    Cypress.Cookies.defaults({
-                        preserve: 'geekyants_session'
-                    })
-                    onSuccess()
-
-                }
 
 
+    const socialLoginOptions = {
+
+        username: username,
+        password: password,
+        loginUrl: 'http://geekyants-login.geekydev.com/#',
+        headless: false,
+        preLoginSelector: '.custom-btn',
+        postLoginSelector: '.review',
+        logs: true,
+        isPopup: false,
+
+    }
+
+    return cy.task('GoogleSocialLogin', socialLoginOptions).then(({ cookies, ssd, lsd }) => {
+        cy.clearCookies()
+        const cookie = cookies.filter(cookie => cookie.name === 'geekyants_session').pop()
+        if (cookie) {
+            cy.setCookie(cookie.name, cookie.value, {
+                domain: cookie.domain,
+                expiry: cookie.expires,
+                httpOnly: cookie.httpOnly,
+                path: cookie.path,
+                secure: cookie.secure
             })
-        })
+            Cypress.Cookies.defaults({
+                preserve: 'geekyants_session'
+            })
+
+            cy.window().then(window => {
+                Object.keys(ssd).forEach(key => window.sessionStorage.setItem(key, ssd[key]))
+                Object.keys(lsd).forEach(key => window.localStorage.setItem(key, lsd[key]))
+            })
+
+            onSuccess()
+
+        }
+
+
     })
+
+
 
 
 
